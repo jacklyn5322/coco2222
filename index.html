@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>2025 世界環境日｜小區撿菸蒂重量統計</title>
+  <style>
+    body {
+      font-family: "Microsoft JhengHei", "Helvetica", "Arial", sans-serif;
+      background-color: #f4f4f4;
+      padding: 2rem;
+      margin: 0;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .grid-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 1rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .card {
+      background-color: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      padding: 1.5rem;
+      text-align: center;
+      font-size: 1.2rem;
+      font-weight: bold;
+      position: relative;
+    }
+    .card .number {
+      font-size: 2rem;
+      color: #007BFF;
+      margin-top: 0.5rem;
+      display: inline-block;
+    }
+    .card .number.animate {
+      animation: flipIn 0.5s ease-in-out;
+    }
+    @keyframes flipIn {
+      0% { transform: rotateX(0deg); opacity: 0.5; }
+      50% { transform: rotateX(90deg); opacity: 0; }
+      100% { transform: rotateX(0deg); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <h1>2025 世界環境日｜小區撿菸蒂重量統計</h1>
+  <div class="grid-container" id="cards"></div>
+
+  <script>
+    const apiUrl = "https://script.google.com/macros/s/AKfycbybR6Abh7gCfGyRrx7W1k5nBUn6C9hg3ovKDlSbBQ0g8CHHgoFHaXQg5xq6dAKc66chgg/exec?action=subregionSummary";
+
+    function createCard(title, value, id) {
+      return `
+        <div class="card">
+          <div>${title}</div>
+          <div class="number" id="${id}">${value}</div>
+        </div>
+      `;
+    }
+
+    function updateCards() {
+      fetch(apiUrl)
+        .then(res => res.json())
+        .then(data => {
+          const container = document.getElementById("cards");
+          container.innerHTML = "";
+
+          // 總重量卡片
+          container.innerHTML += createCard("\uD83C\uDFC6 全部小區總重量", "載入中...", "totalCard");
+
+          // 14 小區卡片
+          const subregions = Object.keys(data.bySubregion).sort();
+          subregions.forEach(key => {
+            container.innerHTML += createCard(key, "載入中...", `card-${key}`);
+          });
+
+          // 更新數字（動畫）
+          document.getElementById("totalCard").innerText = Number(data.total).toLocaleString();
+          document.getElementById("totalCard").classList.add("animate");
+
+          subregions.forEach(key => {
+            const el = document.getElementById(`card-${key}`);
+            el.classList.remove("animate");
+            void el.offsetWidth;
+            el.innerText = Number(data.bySubregion[key]).toLocaleString();
+            el.classList.add("animate");
+          });
+        })
+        .catch(err => {
+          console.error("資料讀取失敗：", err);
+        });
+    }
+
+    updateCards();
+    setInterval(updateCards, 5000); // 每5秒更新
+  </script>
+</body>
+</html>
