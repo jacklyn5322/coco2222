@@ -32,6 +32,11 @@
       font-weight: bold;
       position: relative;
     }
+    .card.large {
+      grid-column: span 2;
+      font-size: 1.5rem;
+      background-color: #e9f5ff;
+    }
     .card .number {
       font-size: 2rem;
       color: #007BFF;
@@ -53,11 +58,19 @@
   <div class="grid-container" id="cards"></div>
 
   <script>
-    const apiUrl = "https://script.google.com/macros/s/AKfycbybR6Abh7gCfGyRrx7W1k5nBUn6C9hg3ovKDlSbBQ0g8CHHgoFHaXQg5xq6dAKc66chgg/exec?action=subregionSummary";
+    const apiUrl = "https://script.google.com/macros/s/你的GAS_ID/exec?action=subregionSummary";
 
-    function createCard(title, value, id) {
+    const fixedSubregions = [
+      "花東縣市區", "基宜縣市區", "台北市區", "新北市區",
+      "桃園市區", "竹苗縣市區", "台中市一區", "台中市二區",
+      "彰化縣市區", "南投縣市區", "雲嘉縣市區", "台南市區",
+      "高市金澎區", "高屏縣市區"
+    ];
+
+    function createCard(title, value, id, isLarge = false) {
+      const cardClass = isLarge ? "card large" : "card";
       return `
-        <div class="card">
+        <div class="${cardClass}">
           <div>${title}</div>
           <div class="number" id="${id}">${value}</div>
         </div>
@@ -71,24 +84,27 @@
           const container = document.getElementById("cards");
           container.innerHTML = "";
 
-          // 總重量卡片
-          container.innerHTML += createCard("\uD83C\uDFC6 全部小區總重量", "載入中...", "totalCard");
+          // 全國總重量卡片（4卡大小）
+          container.innerHTML += createCard("\uD83C\uDFC6 全國響應總重量", "載入中...", "totalCard", true);
 
-          // 14 小區卡片
-          const subregions = Object.keys(data.bySubregion).sort();
-          subregions.forEach(key => {
+          // 固定順序小區卡片
+          fixedSubregions.forEach(key => {
             container.innerHTML += createCard(key, "載入中...", `card-${key}`);
           });
 
           // 更新數字（動畫）
-          document.getElementById("totalCard").innerText = Number(data.total).toLocaleString();
-          document.getElementById("totalCard").classList.add("animate");
+          const totalEl = document.getElementById("totalCard");
+          totalEl.classList.remove("animate");
+          void totalEl.offsetWidth;
+          totalEl.innerText = Number(data.total).toLocaleString();
+          totalEl.classList.add("animate");
 
-          subregions.forEach(key => {
+          fixedSubregions.forEach(key => {
             const el = document.getElementById(`card-${key}`);
+            const value = data.bySubregion[key] || 0;
             el.classList.remove("animate");
             void el.offsetWidth;
-            el.innerText = Number(data.bySubregion[key]).toLocaleString();
+            el.innerText = Number(value).toLocaleString();
             el.classList.add("animate");
           });
         })
